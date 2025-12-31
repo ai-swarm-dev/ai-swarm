@@ -1,0 +1,276 @@
+
+
+services:
+  # ==========================================================================
+  # TEMPORAL - Workflow Orchestration
+  # ==========================================================================
+  temporal:
+    image: temporalio/auto-setup:latest
+    container_name: temporal
+    ports:
+      - "7233:7233"   # gRPC frontend
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=postgres
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml
+    depends_on:
+      - postgres
+    networks:
+      - ai-swarm-network
+    volumes:
+      - ./docker/temporal/dynamicconfig:/etc/temporal/config/dynamicconfig
+
+  # ==========================================================================
+  # TEMPORAL WEB UI
+  # ==========================================================================
+  temporal-ui:
+    image: temporalio/ui:latest
+    container_name: temporal-ui
+    ports:
+      - "127.0.0.1:${TEMPORAL_UI_PORT:-8233}:8080"
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000,https://${PORTAL_DOMAIN}
+    depends_on:
+      - temporal
+    networks:
+      - ai-swarm-network
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.temporal.rule=Host(`${TEMPORAL_DOMAIN}`)"
+      - "traefik.http.routers.temporal.entrypoints=websecure"
+      - "traefik.http.routers.temporal.tls.certresolver=${CERT_RESOLVER}"
+      - "traefik.http.routers.temporal.service=temporal-ui"
+      - "traefik.http.services.temporal-ui.loadbalancer.server.port=8080"
+
+  # ==========================================================================
+  # POSTGRES - Temporal persistence
+  # ==========================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: temporal-postgres
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ai-swarm-network
+
+  # ==========================================================================
+  # REDIS - Caching and ephemeral state
+  # ==========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: ai-swarm-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - ai-swarm-network
+
+
+
+  # ==========================================================================
+  # AI SWARM WORKERS (4 instances)
+  # ==========================================================================
+  worker-1:
+    build:
+      context: .
+      dockerfile: docker/worker/Dockerfile
+    container_name: ai-swarm-worker-1
+    environment:
+      - WORKER_ID=1
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_NAMESPACE=ai-swarm
+      - REDIS_URL=redis://redis:6379
+
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_REPO=${GITHUB_REPO}
+      - PROJECT_DIR=/project
+      - CONTEXT_FOLDER=${CONTEXT_FOLDER:-docs/context}
+      - CHAT_MAX_AGE_DAYS=${CHAT_MAX_AGE_DAYS:-90}
+      - EMAIL_API_KEY=${EMAIL_API_KEY}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - EMAIL_TO=${EMAIL_TO}
+    depends_on:
+      - temporal
+      - redis
+    volumes:
+      - worker_1_home:/home/worker
+      - ${PROJECT_DIR:-.}:/project:rw
+    networks:
+      - ai-swarm-network
+    restart: unless-stopped
+
+  worker-2:
+    build:
+      context: .
+      dockerfile: docker/worker/Dockerfile
+    container_name: ai-swarm-worker-2
+    environment:
+      - WORKER_ID=2
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_NAMESPACE=ai-swarm
+      - REDIS_URL=redis://redis:6379
+
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_REPO=${GITHUB_REPO}
+      - PROJECT_DIR=/project
+      - CONTEXT_FOLDER=${CONTEXT_FOLDER:-docs/context}
+      - CHAT_MAX_AGE_DAYS=${CHAT_MAX_AGE_DAYS:-90}
+      - EMAIL_API_KEY=${EMAIL_API_KEY}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - EMAIL_TO=${EMAIL_TO}
+    depends_on:
+      - temporal
+      - redis
+    volumes:
+      - worker_2_home:/home/worker
+      - ${PROJECT_DIR:-.}:/project:rw
+    networks:
+      - ai-swarm-network
+    restart: unless-stopped
+
+  worker-3:
+    build:
+      context: .
+      dockerfile: docker/worker/Dockerfile
+    container_name: ai-swarm-worker-3
+    environment:
+      - WORKER_ID=3
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_NAMESPACE=ai-swarm
+      - REDIS_URL=redis://redis:6379
+
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_REPO=${GITHUB_REPO}
+      - PROJECT_DIR=/project
+      - CONTEXT_FOLDER=${CONTEXT_FOLDER:-docs/context}
+      - CHAT_MAX_AGE_DAYS=${CHAT_MAX_AGE_DAYS:-90}
+      - EMAIL_API_KEY=${EMAIL_API_KEY}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - EMAIL_TO=${EMAIL_TO}
+    depends_on:
+      - temporal
+      - redis
+    volumes:
+      - worker_3_home:/home/worker
+      - ${PROJECT_DIR:-.}:/project:rw
+    networks:
+      - ai-swarm-network
+    restart: unless-stopped
+
+  worker-4:
+    build:
+      context: .
+      dockerfile: docker/worker/Dockerfile
+    container_name: ai-swarm-worker-4
+    environment:
+      - WORKER_ID=4
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_NAMESPACE=ai-swarm
+      - REDIS_URL=redis://redis:6379
+
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_REPO=${GITHUB_REPO}
+      - PROJECT_DIR=/project
+      - CONTEXT_FOLDER=${CONTEXT_FOLDER:-docs/context}
+      - CHAT_MAX_AGE_DAYS=${CHAT_MAX_AGE_DAYS:-90}
+      - EMAIL_API_KEY=${EMAIL_API_KEY}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - EMAIL_TO=${EMAIL_TO}
+    depends_on:
+      - temporal
+      - redis
+    volumes:
+      - worker_4_home:/home/worker
+      - ${PROJECT_DIR:-.}:/project:rw
+    networks:
+      - ai-swarm-network
+    restart: unless-stopped
+
+  # ==========================================================================
+  # AI SWARM PORTAL (Dashboard)
+  # ==========================================================================
+  portal:
+    build:
+      context: .
+      dockerfile: docker/portal/Dockerfile
+    container_name: ai-swarm-portal
+    ports:
+      - "127.0.0.1:${PORTAL_PORT:-3000}:3000"
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_NAMESPACE=ai-swarm
+      - REDIS_URL=redis://redis:6379
+      - PORTAL_API_KEY=${PORTAL_API_KEY}
+      - NEXT_PUBLIC_TEMPORAL_UI_URL=${NEXT_PUBLIC_TEMPORAL_UI_URL}
+
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - ALLOWED_EMAILS=${ALLOWED_EMAILS}
+      - PROJECT_DIR=/project
+      - CONTEXT_FOLDER=${CONTEXT_FOLDER:-docs/context}
+    depends_on:
+      - temporal
+      - redis
+    networks:
+      - ai-swarm-network
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portal.rule=Host(`${PORTAL_DOMAIN}`)"
+      - "traefik.http.routers.portal.entrypoints=websecure"
+      - "traefik.http.routers.portal.tls.certresolver=${CERT_RESOLVER}"
+      - "traefik.http.routers.portal.service=portal"
+      - "traefik.http.services.portal.loadbalancer.server.port=3000"
+    volumes:
+      - portal_home:/root
+      - ${PROJECT_DIR:-.}:/project:ro
+    restart: unless-stopped
+
+# ==========================================================================
+# VOLUMES
+# ==========================================================================
+volumes:
+  postgres_data:
+    name: ai_swarm_postgres
+  redis_data:
+    name: ai_swarm_redis
+
+  worker_1_home:
+    name: ai_swarm_worker_1_home
+  worker_2_home:
+    name: ai_swarm_worker_2_home
+  worker_3_home:
+    name: ai_swarm_worker_3_home
+  worker_4_home:
+    name: ai_swarm_worker_4_home
+
+  portal_home:
+    name: ai_swarm_portal_home
+
+# ==========================================================================
+# NETWORKS
+# ==========================================================================
+networks:
+  ai-swarm-network:
+    name: ai_swarm_network
+    driver: bridge
+
+  traefik-public:
+    external: true
+    name: ${TRAEFIK_NETWORK}

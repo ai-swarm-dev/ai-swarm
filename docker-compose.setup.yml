@@ -1,0 +1,16 @@
+services:
+  worker-1:
+    command: sleep infinity
+    restart: "no"  # Do not restart automatically while in setup mode
+  
+  worker-2:
+    command: sleep infinity
+    restart: "no"
+
+  worker-3:
+    command: sleep infinity
+    restart: "no"
+
+  worker-4:
+    command: sleep infinity
+    restart: "no"

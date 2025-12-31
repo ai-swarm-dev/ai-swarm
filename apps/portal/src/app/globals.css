@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 230, 237, 243;
+  --background-rgb: 13, 17, 23;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #161b22;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #484f58;
+}
+
+/* Status badges */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-running {
+  @apply bg-swarm-green/20 text-swarm-green;
+}
+
+.badge-completed {
+  @apply bg-swarm-blue/20 text-swarm-blue;
+}
+
+.badge-failed {
+  @apply bg-swarm-red/20 text-swarm-red;
+}
+
+.badge-pending {
+  @apply bg-swarm-yellow/20 text-swarm-yellow;
+}
+
+/* Cards */
+.card {
+  @apply bg-swarm-card border border-swarm-border rounded-lg p-4 transition-colors;
+}
+
+.card:hover {
+  @apply border-swarm-blue/50;
+}
+
+/* Buttons */
+.btn {
+  @apply px-4 py-2 rounded-md font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-primary {
+  @apply bg-swarm-blue text-white hover:bg-swarm-blue/80;
+}
+
+.btn-danger {
+  @apply bg-transparent border border-swarm-red text-swarm-red hover:bg-swarm-red/20;
+}
+
+.btn-ghost {
+  @apply bg-transparent border border-swarm-border text-swarm-text hover:bg-swarm-border;
+}

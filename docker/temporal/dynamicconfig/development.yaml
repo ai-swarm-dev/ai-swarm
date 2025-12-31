@@ -1,0 +1,9 @@
+constraintDefaultingPollInterval:
+  - value: 1s
+    constraints: {}
+matchingNumTaskqueueReadPartitions:
+  - value: 4
+    constraints: {}
+matchingNumTaskqueueWritePartitions:
+  - value: 4
+    constraints: {}
